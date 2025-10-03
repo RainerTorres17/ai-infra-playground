@@ -64,7 +64,7 @@ data "aws_iam_policy_document" "assume" {
     condition {
       test = "StringEquals"
       variable = "${module.eks.oidc_provider}:sub"
-      values = ["system:serviceaccount:helm:autoscaler"]
+      values = ["system:serviceaccount:kube-system:cluster-autoscaler"]
     }
   }
 }
