@@ -6,42 +6,43 @@ module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "6.4.0"
 
+  map_public_ip_on_launch = true
+
   name = "ai-playground"
   cidr = var.vpc_cidr
 
   azs             = ["${var.region}a", "${var.region}b"]
   public_subnets  = var.public_subnets
+  private_subnets = var.private_subnets
 
   enable_nat_gateway = var.enable_nat_gateway
 }
 
 module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "21.3.1"
+  source  = "./modules/eks"
 
-  name    = var.cluster_name
-  kubernetes_version = var.cluster_version
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
   vpc_id          = module.vpc.vpc_id
   subnet_ids      = module.vpc.public_subnets
   endpoint_public_access = var.endpoint_public_access
 
-  enabled_log_types = var.cluster_log_types
+  cluster_log_types = var.cluster_log_types
 
-  eks_managed_node_groups = {
     
-    default = {
-    min_size       = var.node_min_size
-    max_size       = var.node_max_size
-    desired_size   = var.node_desired_size
-    instance_types = var.node_instance_types
-    capacity_type  = var.node_group_capacity_type  # "SPOT" or "ON_DEMAND"
-    disk_size      = var.node_volume_size_gb
-    # optional: labels, taints, ami_type, iam_role_additional_policies, etc.
-    }
+
+  node_min_size       = var.node_min_size
+  node_max_size       = var.node_max_size
+  node_desired_size   = var.node_desired_size
+  node_instance_types = var.node_instance_types
+  node_group_capacity_type  = var.node_group_capacity_type
+  node_volume_size_gb      = var.node_volume_size_gb
+
     
-  }
 
 }
+
+
 
 module "ecr" {
     source = "./modules/ecr"
@@ -53,6 +54,8 @@ module "mlflow"{
   source = "./modules/mlflow"
   mlflow_bucket_versioning = var.mlflow_bucket_versioning
   mlflow_bucket_lifecycle = var.mlflow_bucket_lifecycle
+  oidc_provider_arn =  module.eks.oidc_provider_arn
+  oidc_issuer = module.eks.oidc_provider
   rds_engine = var.rds_engine
   rds_allocated_storage_gb = var.rds_allocated_storage_gb
   rds_instance_class = var.rds_instance_class
@@ -62,8 +65,8 @@ module "mlflow"{
   rds_skip_final_snapshot = var.rds_skip_final_snapshot
   rds_deletion_protection = var.rds_deletion_protection
   vpc_id = module.vpc.vpc_id
-  public_subnets = module.vpc.public_subnets
-  allowed_source_sg_ids = [module.eks.node_security_group_id]
+  private_subnets = module.vpc.private_subnets
+  allowed_source_sg_id = module.eks.node_sg
   username = var.rds_username
   password = var.rds_password
 }

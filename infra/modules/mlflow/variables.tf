@@ -12,6 +12,17 @@ variable "mlflow_bucket_lifecycle" {
   }
 }
 
+#IRSA Variables
+
+variable "oidc_provider_arn" {
+  type = string
+  default = "XXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
+variable "oidc_issuer" {
+  type = string
+  default = "https://XXXXXXXXXXXXXXXXXXXXXXXXXXX"
+}
+
 #RDS Variables
 variable "rds_engine" {
   type = string
@@ -59,13 +70,14 @@ variable "vpc_id" {
     default = "vpc-0f1c2d3e"
 }
   
-variable "public_subnets" {
+variable "private_subnets" {
     type = list(string)
     default = ["subnet-0f1c2d3e", "subnet-0f1c2d3e"]
 }
 
-variable "allowed_source_sg_ids" {
-  type = list(string)
+variable "allowed_source_sg_id" {
+  type = string
+  default = "sg-0f1c2d3e"
 }
 
 #Credentials
