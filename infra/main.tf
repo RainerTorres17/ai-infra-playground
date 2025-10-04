@@ -30,15 +30,7 @@ module "eks" {
   cluster_log_types = var.cluster_log_types
 
     
-
-  node_min_size       = var.node_min_size
-  node_max_size       = var.node_max_size
-  node_desired_size   = var.node_desired_size
-  node_instance_types = var.node_instance_types
-  node_group_capacity_type  = var.node_group_capacity_type
-  node_volume_size_gb      = var.node_volume_size_gb
-
-    
+  eks_managed_node_groups = var.eks_managed_node_groups
 
 }
 

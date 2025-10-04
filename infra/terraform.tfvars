@@ -9,15 +9,19 @@ enable_nat_gateway    = false
 cluster_name          = "ai-playground-eks"
 cluster_version       = "1.30"
 endpoint_public_access = true
-cluster_log_types     = []             # turn on per-need
+cluster_log_types     = []
 
 # Node group (Managed)
-node_group_capacity_type = "SPOT"      # or "ON_DEMAND"
-node_instance_types      = ["t3.small"]
-node_desired_size        = 0
-node_min_size            = 0
-node_max_size            = 2
-node_volume_size_gb      = 20
+eks_managed_node_groups = {
+      "default" = {
+          "min_size" = 0
+          "max_size" = 2
+          "desired_size" = 1
+          "instance_types" = ["t3.small"]
+          "capacity_type"  = "SPOT"
+          "disk_size"      = 20
+        }
+}
 
 # ECR
 ecr_repo_name            = "ai-playground-app"
@@ -39,5 +43,5 @@ rds_backup_retention     = 1
 rds_public_accessible    = false
 rds_deletion_protection  = false
 rds_skip_final_snapshot  = true
-rds_username = "admin"
-rds_password = "abc123"
+rds_username = "mlflow"
+rds_password = "S3curePassw0rd!"

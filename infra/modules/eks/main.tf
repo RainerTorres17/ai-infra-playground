@@ -7,30 +7,29 @@ module "eks" {
   vpc_id          = var.vpc_id
   subnet_ids      = var.subnet_ids
   endpoint_public_access = var.endpoint_public_access
-
+  create_cloudwatch_log_group = true
+  cloudwatch_log_group_retention_in_days = 14
   enabled_log_types = var.cluster_log_types
 
   enable_cluster_creator_admin_permissions = true
 
-  eks_managed_node_groups = {
-    
-    default = {
-    min_size       = var.node_min_size
-    max_size       = var.node_max_size
-    desired_size   = var.node_desired_size
-    instance_types = var.node_instance_types
-    capacity_type  = var.node_group_capacity_type
-    disk_size      = var.node_volume_size_gb
-    }
-    
-  }
+  eks_managed_node_groups = var.eks_managed_node_groups
 
 }
 
-resource "aws_cloudwatch_log_group" "eks" {
-  name = "/aws/eks/${var.cluster_name}/cluster"
-  retention_in_days = 7
-  skip_destroy = false
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name = var.cluster_name
+  addon_name   = "vpc-cni"
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name = var.cluster_name
+  addon_name   = "kube-proxy"
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name = var.cluster_name
+  addon_name   = "coredns"
 }
 
 data "aws_iam_policy_document" "autoscaler" {

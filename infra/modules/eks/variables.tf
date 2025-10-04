@@ -20,31 +20,18 @@ variable "cluster_log_types" {
 }
 
 # Node
-variable "node_group_capacity_type"{
-    type = string
-    default = "ON_DEMAND"
-
-}
-variable "node_instance_types"{
-    type = list
-    default = ["t3a.medium"]
-}
-variable "node_desired_size"{
-    type = number
-    default = 1
-}
-variable "node_min_size"{
-    type = number
-    default = 1
-
-}
-variable "node_max_size"{
-    type = number
-    default = 3
-}
-variable "node_volume_size_gb"{
-    type = number
-    default = 20
+variable "eks_managed_node_groups" {
+    type = map (any)
+    default = {
+        "default" = {
+            "min_size" = 0
+            "max_size" = 1
+            "desired_size" = 1
+            "instance_types" = ["t3.small"]
+            "capacity_type"  = "SPOT"
+            "disk_size"      = 20
+        }
+    }
 }
 
 # VPC
