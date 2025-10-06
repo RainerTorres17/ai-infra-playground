@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+  labels:
+    app: app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name: app
+        image: mlflow:v3.4.0 # Replace with your Docker image name and tag
+        env:
+        - name: MLFLOW_TRACKING_URI
+          value: http://mlflow-service:5000
+        ports:
+        - containerPort: 80 # Container listening port (match your app)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+spec:
+  type: ClusterIP                     # use LoadBalancer or Ingress only if needed externally
+  selector:
+    app: app                          # <-- matches Pod labels
+  ports:
+  - port: 80
+    targetPort: 80

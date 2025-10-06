@@ -15,3 +15,9 @@ terraform {
     }
   }
 }
+
+provider "helm" {
+  kubernetes {
+    config_path = pathexpand("~/.kube/config")
+  }
+}

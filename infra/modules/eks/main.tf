@@ -48,7 +48,7 @@ data "aws_iam_policy_document" "autoscaler" {
   }
 }
 
-data "aws_iam_policy_document" "assume" {
+data "aws_iam_policy_document" "assume_auto" {
   statement {
     actions = ["sts:AssumeRoleWithWebIdentity"]
     principals {
@@ -68,17 +68,104 @@ data "aws_iam_policy_document" "assume" {
   }
 }
 
+data "aws_iam_policy_document" "assume_load" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [module.eks.oidc_provider_arn]
+    }
+    condition {
+      test = "StringEquals"
+      variable = "${module.eks.oidc_provider}:aud"
+      values = ["sts.amazonaws.com"]
+    }
+    condition {
+      test = "StringEquals"
+      variable = "${module.eks.oidc_provider}:sub"
+      values = ["system:serviceaccount:kube-system:load-balancer-controller"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "aws_load_balancer_controller" {
+  statement {
+    actions = [
+      "iam:CreateServiceLinkedRole",
+      "elasticloadbalancing:DescribeTargetHealth",
+      "elasticloadbalancing:DescribeTargetGroups",
+      "elasticloadbalancing:DescribeLoadBalancers",
+      "elasticloadbalancing:DescribeTags",
+      "elasticloadbalancing:DescribeListeners",
+      "elasticloadbalancing:DescribeListenerCertificates",
+      "elasticloadbalancing:DescribeListenerCertificates",
+      "elasticloadbalancing:DescribeLoadBalancerAttributes",
+      "elasticloadbalancing:DescribeLoadBalancerPolicies",
+      "elasticloadbalancing:DescribeLoadBalancerPolicyTypes",
+      "elasticloadbalancing:ModifyTargetGroupAttributes",
+      "elasticloadbalancing:DeleteTargetGroup",
+      "elasticloadbalancing:DeleteLoadBalancerListeners",
+      "elasticloadbalancing:DeleteLoadBalancer",
+      "elasticloadbalancing:DeleteLoadBalancer",
+      "elasticloadbalancing:DeleteListener",
+      "elasticloadbalancing:DeleteTargetGroup",
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
+      "elasticloadbalancing:SetLoadBalancerPoliciesForBackendServer",
+      "elasticloadbalancing:ModifyLoadBalancerAttributes",
+      "elasticloadbalancing:AddListenerCertificates",
+      "elasticloadbalancing:RemoveListenerCertificates",
+      "elasticloadbalancing:ModifyTargetGroup",
+      "elasticloadbalancing:ModifyListener",
+      "elasticloadbalancing:AddListenerCertificates",
+      "elasticloadbalancing:RemoveListenerCertificates",
+      "elasticloadbalancing:ModifyListener",
+      "elasticloadbalancing:ModifyTargetGroup",
+      "elasticloadbalancing:RegisterTargets",
+      "elasticloadbalancing:SetLoadBalancerPoliciesOfListener",
+      "elasticloadbalancing:DescribeLoadBalancers",
+      "elasticloadbalancing:DescribeLoadBalancerAttributes",
+      "elasticloadbalancing:DescribeListeners",
+      "elasticloadbalancing:DescribeListenerCertificates",
+      "elasticloadbalancing:DescribeSSLPolicies",
+      "elasticloadbalancing:DescribeRules",
+      "elasticloadbalancing:DescribeTargetGroups",
+      "elasticloadbalancing:DescribeTargetGroupAttributes",
+      "elasticloadbalancing:DescribeTargetHealth",
+      "elasticloadbalancing:DescribeTags"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "aws_load_balancer_controller" {
+  name = "aws_load_balancer_controller"
+  policy = data.aws_iam_policy_document.aws_load_balancer_controller.json
+}
+
 resource "aws_iam_policy" "autoscaler" {
   name = "autoscaler"
   policy = data.aws_iam_policy_document.autoscaler.json
 }
 
-resource "aws_iam_role" "helm_irsa" {
+resource "aws_iam_role" "autoscaler" {
   name = "autoscaler"
-  assume_role_policy = data.aws_iam_policy_document.assume.json
+  assume_role_policy = data.aws_iam_policy_document.assume_auto.json
 }
 
-resource "aws_iam_role_policy_attachment" "this" {
-  role = aws_iam_role.helm_irsa.name
+resource "aws_iam_role" "aws_load_balancer_controller"{
+  name = "aws_load_balancer_controller"
+  assume_role_policy = data.aws_iam_policy_document.assume_load.json
+}
+
+resource "aws_iam_role_policy_attachment" "autoscaler" {
+  role = aws_iam_role.autoscaler.name
   policy_arn = aws_iam_policy.autoscaler.arn
 }
+
+resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
+  role = aws_iam_role.aws_load_balancer_controller.name
+  policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
+}
+
+

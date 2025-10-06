@@ -1,0 +1,43 @@
+# --- Minimal kube-prometheus-stack values (EKS) ---
+
+# 1) Grafana: enable a simple, internal-only URL via ALB Ingress
+grafana:
+  adminPassword: "change-me"          # set your own secret
+  ingress:
+    enabled: true
+    ingressClassName: alb              # AWS Load Balancer Controller
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internal  # internal ALB (not public)
+      alb.ingress.kubernetes.io/target-type: ip   # works with EKS CNI
+    hosts:
+      - grafana.internal.example.com   # replace with your internal DNS name
+
+  # The chart auto-wires a Prometheus datasource via sidecars by default.
+  # No need to set URLs unless you’re customizing.
+
+# 2) Prometheus: keep data and avoid unbounded growth
+prometheus:
+  prometheusSpec:
+    retention: 15d                     # how long to keep metrics
+    storageSpec:                       # persistent storage for Prometheus TSDB
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi            # size as needed
+          # storageClassName: gp3      # uncomment if you use a custom class
+
+# 3) Alertmanager: optional small persistent volume (helps on upgrades/restarts)
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+
+# 4) Cluster scraping: defaults already enable k8s components (kubelet, apiserver, etc.)
+# You don’t need to set anything here for a basic setup.

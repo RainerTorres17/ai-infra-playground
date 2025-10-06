@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow-config
+data:
+  MLFLOW_TRACKING_URI: http://mlflow-service.mflow.svc.cluster.local:5000
+  # Optional/for later (server-side config):
+  # MLFLOW_BACKEND_STORE_URI: postgresql+psycopg2://user:pass@rds-endpoint:5432/mlflow
+  # MLFLOW_ARTIFACT_URI: s3://your-bucket/path
+  # MLFLOW_S3_ENDPOINT_URL: https://s3.us-east-1.amazonaws.com   # (only if using custom/minio)
