@@ -3,20 +3,20 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: mlflow-ingress
-  namespace: mflow
+  namespace: mlops
   annotations:
-    alb.ingress.kubernetes.io/scheme: internal        # create an INTERNAL ALB (use 'internet-facing' if you need public access)
-    alb.ingress.kubernetes.io/target-type: ip         # target pods directly (typical for EKS)
+    alb.ingress.kubernetes.io/scheme: internal        
+    alb.ingress.kubernetes.io/target-type: ip         
 spec:
-  ingressClassName: alb                               # handled by AWS Load Balancer Controller
+  ingressClassName: alb                               
   rules:
-  - host: mlflow.internal.example.com                 # replace with your internal DNS name or omit host to accept any host
+  - host: mlflow.internal.example.com                 # replace with internal DNS name
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: mlflow-service                      # Service that fronts the MLflow pods
+            name: mlflow-service                      
             port:
               number: 5000

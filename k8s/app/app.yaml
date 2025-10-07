@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app-deployment
+  namespace: app
   labels:
     app: app
 spec:
@@ -16,21 +17,29 @@ spec:
     spec:
       containers:
       - name: app
-        image: mlflow:v3.4.0 # Replace with your Docker image name and tag
+        image:  765568065512.dkr.ecr.us-east-1.amazonaws.com/ai-playground-app:ai-app-v1
         env:
         - name: MLFLOW_TRACKING_URI
           value: http://mlflow-service:5000
         ports:
-        - containerPort: 80 # Container listening port (match your app)
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: app-service
+  namespace: app
 spec:
-  type: ClusterIP                     # use LoadBalancer or Ingress only if needed externally
+  type: ClusterIP                    
   selector:
-    app: app                          # <-- matches Pod labels
+    app: app                          
   ports:
   - port: 80
     targetPort: 80

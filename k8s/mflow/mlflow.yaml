@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mlflow-deployment
+  namespace: mlops
   labels:
     app: mlflow
 spec:
@@ -14,6 +15,7 @@ spec:
       labels:
         app: mlflow
     spec:
+      serviceAccountName: mlflow-sa
       containers:
       - name: mlflow
         image: ghcr.io/mlflow/mlflow:v3.4.0
@@ -21,12 +23,13 @@ spec:
         args: ["server", "--host", "0.0.0.0", "--port", "5000", "--backend-store-uri", "sqlite:///mlflow.db", "--default-artifact-root", "/mlruns"]
         ports:
         - containerPort: 5000
-        # For real deployments, set MLflow server args/env for backend/artifacts
+        # Set MLflow server args/env for backend/artifacts
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: mlflow-service
+  namespace: mlops
 spec:
   type: ClusterIP
   selector:
