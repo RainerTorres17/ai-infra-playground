@@ -10,9 +10,9 @@ jobs:
       contents: read
 
     env:
-      AWS_REGION: YOUR_AWS_REGION
-      EKS_CLUSTER_NAME: YOUR_EKS_CLUSTER_NAME
-      K8S_NAMESPACE: YOUR_K8S_NAMESPACE
+      AWS_REGION: us-east-1
+      EKS_CLUSTER_NAME: ai-playground-eks
+      K8S_NAMESPACE: app
 
     steps:
       - name: Checkout
