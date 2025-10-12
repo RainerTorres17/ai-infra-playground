@@ -1,0 +1,52 @@
+name: trigger-train
+on:
+  workflow_dispatch: {}
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write        
+      contents: read
+
+    env:
+      AWS_REGION: YOUR_AWS_REGION
+      EKS_CLUSTER_NAME: YOUR_EKS_CLUSTER_NAME
+      K8S_NAMESPACE: YOUR_K8S_NAMESPACE
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ vars.ROLE_TO_ASSUME }}
+          role-session-name: gha-train-session
+
+      - name: Install kubectl & eksctl
+        run: |
+          sudo curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.34.1/2025-09-19/bin/linux/arm64/kubectl
+          pipx install awscli >/dev/null 2>&1 || true
+          pipx install eksctl >/dev/null 2>&1 || true
+
+      - name: Connect kubectl to EKS
+        run: |
+          aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+          kubectl get nodes
+
+      - name: Apply training Job
+        run: |
+          kubectl -n "$K8S_NAMESPACE" apply -f k8s/train-job.yaml
+
+
+      - name: Wait for completion
+        run: |
+          kubectl -n "$K8S_NAMESPACE" wait --for=condition=complete --timeout=90m job/forecast-train
+
+      - name: Show trainer logs
+        run: |
+          POD=$(kubectl -n "$K8S_NAMESPACE" get pods -l job-name=forecast-train -o jsonpath='{.items[0].metadata.name}')
+          kubectl -n "$K8S_NAMESPACE" logs "$POD" --timestamps
+
