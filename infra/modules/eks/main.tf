@@ -19,14 +19,17 @@ module "eks" {
     vpc-cni = {
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
+      most_recent = true
     }
     kube-proxy = {
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
+      most_recent = true
     }
     coredns = {
       resolve_conflicts_on_create = "OVERWRITE"
       resolve_conflicts_on_update = "OVERWRITE"
+      most_recent = true
     }
   }
 
@@ -36,6 +39,46 @@ module "eks" {
     delete = "15m"
   }
 
+}
+
+# IAM for EKS
+
+resource "aws_iam_openid_connect_provider" "github" {
+  url = "https://token.actions.githubusercontent.com"
+
+  client_id_list = ["sts.amazonaws.com"]
+}
+
+data "aws_iam_policy_document" "assume_deploy"{
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+    condition {
+      test = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values = ["sts.amazonaws.com"]
+    }
+    condition {
+      test = "StringEquals"
+      variable = "token.actions.githubusercontent.com:sub"
+      values = [var.github_repo]
+    }
+  }
+}
+
+
+data "aws_iam_policy_document" "github_eks_deploy" {
+  statement {
+    actions = [
+      "eks:DescribeCluster",
+      "eks:ListClusters",
+      "eks:AccessKubernetesApi"
+    ]
+    resources = ["*"]
+  }
 }
 
 data "aws_iam_policy_document" "autoscaler" {
@@ -104,6 +147,12 @@ resource "aws_iam_policy" "autoscaler" {
   policy = data.aws_iam_policy_document.autoscaler.json
 }
 
+resource "aws_iam_policy" "github_eks_deploy"{
+  name = "github_eks_deploy"
+  policy = data.aws_iam_policy_document.github_eks_deploy.json
+
+}
+
 resource "aws_iam_role" "autoscaler" {
   name = "autoscaler"
   assume_role_policy = data.aws_iam_policy_document.assume_auto.json
@@ -112,6 +161,11 @@ resource "aws_iam_role" "autoscaler" {
 resource "aws_iam_role" "aws_load_balancer_controller"{
   name = "aws_load_balancer_controller"
   assume_role_policy = data.aws_iam_policy_document.assume_load.json
+}
+
+resource "aws_iam_role" "github_eks_deploy" {
+  name = "github_eks_deploy"
+  assume_role_policy = data.aws_iam_policy_document.assume_deploy.json
 }
 
 resource "aws_iam_role_policy_attachment" "autoscaler" {
@@ -124,4 +178,8 @@ resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
   policy_arn = aws_iam_policy.aws_load_balancer_controller.arn
 }
 
+resource "aws_iam_role_policy_attachment" "github_eks_deploy" {
+  role = aws_iam_role.github_eks_deploy.name
+  policy_arn = aws_iam_policy.github_eks_deploy.arn
+}
 

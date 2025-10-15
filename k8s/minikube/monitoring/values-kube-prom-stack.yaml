@@ -1,0 +1,35 @@
+labels:
+  release: kube-prometheus-stack
+
+grafana:
+  service:
+    type: NodePort               
+  ingress:
+    enabled: false
+  adminPassword: "admin"          
+
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    retention: 7d                     
+    storageSpec:                       
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi            
+
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi

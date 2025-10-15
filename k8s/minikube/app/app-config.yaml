@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow-client-config
+  namespace: app
+data:
+  MLFLOW_TRACKING_URI: "http://mlflow-proxy.mlops.svc.cluster.local:5000"

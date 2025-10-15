@@ -1,9 +1,21 @@
 resource "random_id" "suffix" {
   byte_length = 4
 }
+
 resource "aws_s3_bucket" "this" {
     bucket = "ai-playground-mlflow-${random_id.suffix.hex}"
     force_destroy = true
+}
+
+resource "aws_s3_object" "folders" {
+  for_each = toset([
+    "mlflow/",
+    "data/"
+  ])
+
+  bucket  = aws_s3_bucket.this.bucket
+  key     = each.value
+  content = ""
 }
 
 resource "aws_s3_bucket_versioning" "versioning" {
@@ -54,6 +66,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "default" {
 
 # IAM
 
+# Access Policy for training data in S3: IRSA for Training Pod
+
 data "aws_iam_policy_document" "artifact_policy"{
   statement {
     actions = [
@@ -66,7 +80,33 @@ data "aws_iam_policy_document" "artifact_policy"{
       "s3:DeleteObjectVersion"
      ]
     resources = [
-      "${aws_s3_bucket.this.arn}/*"
+      "${aws_s3_bucket.this.arn}/mlflow"
+    ]
+  }
+  statement {
+    actions = [
+      "s3:ListBucket",
+      "s3:ListBucketVersions"
+    ]
+    resources = [
+      aws_s3_bucket.this.arn
+     ]
+  }
+}
+
+data "aws_iam_policy_document" "data_policy"{
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:GetObjectTagging",
+      "s3:PutObject",
+      "s3:PutObjectTagging",
+      "s3:DeleteObject",
+      "s3:DeleteObjectVersion"
+     ]
+    resources = [
+      "${aws_s3_bucket.this.arn}/data"
     ]
   }
   statement {
@@ -100,6 +140,31 @@ data "aws_iam_policy_document" "assume" {
   }
 }
 
+data "aws_iam_policy_document" "assume_data" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    principals {
+      type        = "Federated"
+      identifiers = [var.oidc_provider_arn]
+    }
+    condition {
+      test = "StringEquals"
+      variable = "${var.oidc_issuer}:aud"
+      values = ["sts.amazonaws.com"]
+    }
+    condition {
+      test = "StringEquals"
+      variable = "${var.oidc_issuer}:sub"
+      values = ["system:serviceaccount:mlops:train-sa"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "data_policy" {
+    name = "data-policy"
+    policy = data.aws_iam_policy_document.data_policy.json
+}
+
 resource "aws_iam_policy" "artifact_policy" {
     name = "mlflow-s3-policy"
     policy = data.aws_iam_policy_document.artifact_policy.json
@@ -110,9 +175,19 @@ resource "aws_iam_role" "mlflow_irsa" {
   assume_role_policy = data.aws_iam_policy_document.assume.json
 }
 
+resource "aws_iam_role" "data_irsa" {
+  name = "data-irsa-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_data.json
+}
+
 resource "aws_iam_role_policy_attachment" "this" {
   role = aws_iam_role.mlflow_irsa.name
   policy_arn = aws_iam_policy.artifact_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "this_data" {
+  role = aws_iam_role.data_irsa.name
+  policy_arn = aws_iam_policy.data_policy.arn
 }
 
 

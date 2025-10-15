@@ -43,6 +43,8 @@ module "eks" {
     
   eks_managed_node_groups = var.eks_managed_node_groups
 
+  github_repo = var.github_repo
+
 }
 
 

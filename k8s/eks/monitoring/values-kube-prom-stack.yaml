@@ -1,0 +1,36 @@
+labels:
+  release: kube-prometheus-stack
+
+grafana:
+  sidecar:
+    dashboards:
+      enabled: true
+      labelValue: "1"
+      labelKey: grafana_dashboard
+  adminPassword: "admin"      
+  service:
+    type: NodePort            
+  ingress:
+    enabled: false            
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    retention: 7d             
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi    
+
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 2Gi

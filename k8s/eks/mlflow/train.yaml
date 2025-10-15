@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: forecast-train
+  namespace: mlops
+spec:
+  ttlSecondsAfterFinished: 3600  
+  backoffLimit: 0                 
+  template:
+    spec:
+      serviceAccountName: train-sa
+      restartPolicy: Never
+      containers:
+      - name: trainer
+        image: train:dev
+        imagePullPolicy: IfNotPresent
+        env:
+
+          - name: MLFLOW_TRACKING_URI
+            value: "http://mlflow-proxy.mlops.svc.cluster.local:5000"
+
+          - name: EXPERIMENT_NAME
+            value: "forecast-demo"
+          - name: MODEL_NAME
+            value: "ForecastModel"
+
+
+          - name: S3_DATA_URI
+            value: "s3://ai-playground-mlflow-da8b551a/data/latest.csv"
+
+        command: ["/bin/sh","-c"]
+        args:
+          - |
+            set -e
+            echo "Starting training…"
+            python app/train/train.py --csv "$S3_DATA_URI"
+            echo "Training completed."

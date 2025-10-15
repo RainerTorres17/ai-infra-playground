@@ -45,3 +45,7 @@ variable "subnet_ids" {
     default = ["subnet-0e1f1f1f1f1f1f1f1","subnet-0e1f1f1f1f1f1f1f1","subnet-0e1f1f1f1f1f1f1f1"]
   
 }
+
+variable "github_repo" {
+    type = string
+}

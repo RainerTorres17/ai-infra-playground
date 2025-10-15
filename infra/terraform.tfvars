@@ -45,3 +45,6 @@ rds_deletion_protection  = false
 rds_skip_final_snapshot  = true
 rds_username = "mlflow"
 rds_password = "S3curePassw0rd!"
+
+# GitHub
+github_repo = "repo:RainerTorres17/ai-infra-playground:*"

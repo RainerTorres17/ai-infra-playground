@@ -1,0 +1,29 @@
+# shared-mlflow-pv-app.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: shared-mlflow-pv-app
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /data/mlflow/artifacts
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: shared-mlflow-db-pv-app
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    path: /data/mlflow/db

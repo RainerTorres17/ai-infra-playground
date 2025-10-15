@@ -7,3 +7,8 @@ crash.log
 *.tfvars.json
 !.terraform.lock.hcl
 .DS_Store
+venv311/
+__pycache__
+.mlflow_artifacts
+mlflow.db
+sk_model.npy

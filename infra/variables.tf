@@ -139,3 +139,9 @@ variable "rds_password"{
     type = string
     sensitive = true
 }
+
+#Github repo
+variable "github_repo"{
+    type = string
+    default = "mlflow-mlops"
+}

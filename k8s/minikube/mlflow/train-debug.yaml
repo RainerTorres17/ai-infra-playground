@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: forecast-train-debug
+  namespace: mlops
+spec:
+  restartPolicy: Never
+  volumes:
+    - name: mlruns-storage
+      persistentVolumeClaim:
+        claimName: mlruns-pvc
+    - name: mlflow-db-storage
+      persistentVolumeClaim:
+        claimName: mlflow-db-pvc
+  containers:
+    - name: trainer
+      image: train:dev
+      imagePullPolicy: IfNotPresent
+      stdin: true
+      tty: true
+      command: ["/bin/sh"]
+      env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow-proxy.mlops.svc.cluster.local:5000"
+        - name: EXPERIMENT_NAME
+          value: "forecast-demo"
+        - name: MODEL_NAME
+          value: "ForecastModel"
+        - name: S3_DATA_URI
+          value: "s3://ai-playground-mlflow-da8b551a/data/latest.csv"
+      volumeMounts:
+        - name: mlruns-storage
+          mountPath: /mlflow/mlruns
+        - name: mlflow-db-storage
+          mountPath: /mlflow/db

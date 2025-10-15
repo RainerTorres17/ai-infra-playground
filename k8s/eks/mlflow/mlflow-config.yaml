@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlflow-config
+  namespace: mlops
+data:
+  artifact_root: "s3://ai-playground-mlflow-da8b551a/artifacts/"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mlflow-config
+  namespace: mlops
+type: Opaque
+stringData:
+  backend_store_uri: "postgresql+psycopg2://mlflow:S3curePassw0rd!@terraform-20251008203108652300000008.c8d2oaa62muf.us-east-1.rds.amazonaws.com:5432/mlflow"

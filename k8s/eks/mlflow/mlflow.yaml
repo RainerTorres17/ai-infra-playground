@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-deployment
+  namespace: mlops
+  labels:
+    app: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      volumes:
+        - name: pydeps
+          emptyDir: {}
+      serviceAccountName: mlflow-sa
+      initContainers:
+        - name: pydeps-install
+          image: python:3.10-slim
+          command: ["/bin/sh","-c"]
+          args:
+            - |
+              python -m pip install --no-cache-dir --upgrade pip && python -m pip install --no-cache-dir psycopg2-binary==2.9.9 -t /opt/pydeps
+          volumeMounts:
+            - name: pydeps
+              mountPath: /opt/pydeps
+      containers:
+        - name: mlflow
+          image: ghcr.io/mlflow/mlflow:v3.4.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              mlflow server --host 0.0.0.0 --port 5000
+              --backend-store-uri "$BACKEND_STORE_URI"
+              --default-artifact-root "$ARTIFACT_ROOT"
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: pydeps
+              mountPath: /opt/pydeps
+          env:
+            - name: BACKEND_STORE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-config
+                  key: backend_store_uri
+            - name: ARTIFACT_ROOT
+              valueFrom:
+                configMapKeyRef:
+                  name: mlflow-config
+                  key: artifact_root
+            - name: PYTHONPATH
+              value: /opt/pydeps
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-service
+  namespace: mlops
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

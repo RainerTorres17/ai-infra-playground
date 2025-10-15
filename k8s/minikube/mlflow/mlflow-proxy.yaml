@@ -1,0 +1,43 @@
+# k8s/localmlflow/mlflow-proxy.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-proxy
+  namespace: mlops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow-proxy
+  template:
+    metadata:
+      labels:
+        app: mlflow-proxy
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: cfg
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: cfg
+          configMap:
+            name: mlflow-proxy-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow-proxy
+  namespace: mlops
+spec:
+  selector:
+    app: mlflow-proxy
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
