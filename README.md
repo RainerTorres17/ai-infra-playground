@@ -1,2 +1,2 @@
-# ai-infra-playground
-The goal of this project is to simulate how an ML service is built and managed.
+# MLflow Serving Stack
+A lightweight, end-to-end stack for deploying and monitoring predictive models, statistical or machine learning-based, with integrated experiment tracking and observability. It includes configurations for deployments on both minikube and EKS.

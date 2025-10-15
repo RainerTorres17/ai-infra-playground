@@ -47,4 +47,4 @@ rds_username = "mlflow"
 rds_password = "S3curePassw0rd!"
 
 # GitHub
-github_repo = "repo:RainerTorres17/ai-infra-playground:*"
+github_repo = "repo:RainerTorres17/mlflow-serving-stack:*"
