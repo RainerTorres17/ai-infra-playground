@@ -32,10 +32,6 @@ jobs:
           sudo mv kubectl /usr/local/bin/
           pipx install awscli >/dev/null 2>&1 || true
 
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 765568065512.dkr.ecr.us-east-1.amazonaws.com
-
       - name: Connect kubectl to EKS
         run: |
           aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
