@@ -14,20 +14,25 @@ A lightweight, end-to-end stack for deploying and monitoring predictive models, 
 ---
 
 ## Training and Experiment Tracking
-Each training job registers a new model version in MLflow. The first run promotes a model to the `@prod` alias automatically for serving. The consecutive runs can be promoted to prod under the condition that their SMAPE score is lower than the current production model.
+Each training job registers a new model version in MLflow. The first run promotes a model to the `@prod` alias automatically for serving. The consecutive runs can be promoted to prod under the condition that their SMAPE score is lower than the current production model. 
 
 <img width="2543" height="782" alt="Screenshot 2025-10-14 at 5 51 23 PM" src="https://github.com/user-attachments/assets/a0a87b54-5481-49e0-a484-fdc4cc6e22c8" />
+<img width="1955" height="1092" alt="Screenshot 2025-10-16 at 7 34 24 PM" src="https://github.com/user-attachments/assets/5b6311ee-3887-4f91-94c6-9a0c73524667" />
 
-
-*Notes:*
-For local testing the training data is included in folder with the training script. The docker image used for the training job will include that training data file which can then be directly refrenced in the training job manifest where the script is called. If running on EKS update the environment variables to include your S3 bucket with the training data.
+### EKS
+Training jobs are triggered via a GitHub action that deploys a batch job that accesses your training data from the S3 bucket. Currently the workflow is manually triggered,
+### MiniKube
+For local testing the training data is included in folder with the training script. The docker image used for the training job will include that training data file which can then be directly refrenced in the training job manifest where the script is called.
 
 ---
 
 ## Model Serving
-Models are served via a FastAPI app that loads the latest `@prod` version from MLflow. I created a local streamlit application that makes api calls to the hosted model to simulate a realistic use case.
+Models are served via a FastAPI app that loads the latest `@prod` version from MLflow. I created a local streamlit application that makes api calls to the hosted model to simulate a realistic use case. A horizontal pod autoscaler was also included to simulate and test resiliency.
 
-<img width="823" height="1083" alt="Screenshot 2025-10-14 at 5 59 40 PM" src="https://github.com/user-attachments/assets/a2bd91ae-4f5d-434d-a974-b9280990d11e" /><img width="805" height="1074" alt="Screenshot 2025-10-14 at 5 53 08 PM" src="https://github.com/user-attachments/assets/97d79eb3-f85e-4d7b-9d71-a86a0ad398fb" />
+<img width="823" height="1083" alt="Screenshot 2025-10-14 at 5 59 40 PM" src="https://github.com/user-attachments/assets/a2bd91ae-4f5d-434d-a974-b9280990d11e" /><img width="805" height="1074" alt="Screenshot 2025-10-14 at 5 53 08 PM" src="https://github.com/user-attachments/assets/97d79eb3-f85e-4d7b-9d71-a86a0ad398fb" /><img width="717" height="102" alt="Screenshot 2025-10-16 at 7 50 59 PM" src="https://github.com/user-attachments/assets/de8d22df-abff-4f7e-b167-0d6beb05235f" />
+
+
+
 
 ---
 
@@ -46,6 +51,9 @@ The system can be tested locally using Minikube. Make sure to push the images fo
 
 For EKS all infrastructure is managed entirely through Terraform. Update the tfvars with your preferred configurations and GitHub repo to allow access to workflows.
 
+<img width="1674" height="1091" alt="Screenshot 2025-10-16 at 7 33 23 PM" src="https://github.com/user-attachments/assets/c8e95d50-1991-4a5a-8f21-bca3cf0de57b" />
+
+
 Current cloud infrastructure set up:
   - EKS in public subnet for cost efficiency
   - Helm installs monitoring stack
@@ -57,6 +65,5 @@ Current cloud infrastructure set up:
 ## Future Improvements
 
 -	Replace ARIMA with ML model (e.g., regression or Prophet)
--	Add GitHub Actions CI/CD pipeline
 -	Add ingress/ALB for public API access
 -	Convert K8s manifest to helm charts for easier deployment
