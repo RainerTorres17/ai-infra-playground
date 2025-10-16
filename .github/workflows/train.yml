@@ -39,7 +39,7 @@ jobs:
 
       - name: Apply training Job
         run: |
-          kubectl -n "$K8S_NAMESPACE" apply -f k8s/train-job.yaml
+          kubectl -n "$K8S_NAMESPACE" apply -f k8s/eks/mlflow/train.yaml
 
 
       - name: Wait for completion
