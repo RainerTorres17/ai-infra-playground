@@ -22,7 +22,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: ${{ env.AWS_REGION }}
-          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/${{ vars.ROLE_TO_ASSUME }}
+          role-to-assume: ${{ vars.EKS_ROLE_ARN }}
           role-session-name: gha-train-session
 
       - name: Install kubectl & eksctl
