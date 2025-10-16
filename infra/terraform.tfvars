@@ -17,7 +17,7 @@ eks_managed_node_groups = {
           "min_size" = 0
           "max_size" = 2
           "desired_size" = 1
-          "instance_types" = ["t3.small"]
+          "instance_types" = ["t3.medium"]
           "capacity_type"  = "SPOT"
           "disk_size"      = 20
         }

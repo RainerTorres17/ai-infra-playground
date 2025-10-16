@@ -15,28 +15,28 @@ module "eks" {
 
   eks_managed_node_groups = var.eks_managed_node_groups
 
-  addons = {
+}
+
+module "eks_blueprints_addons" {
+  source  = "aws-ia/eks-blueprints-addons/aws"
+  version = "~> 1.0"
+
+  cluster_name      = module.eks.cluster_name
+  cluster_endpoint  = module.eks.cluster_endpoint
+  cluster_version   = module.eks.cluster_version
+  oidc_provider_arn = module.eks.oidc_provider_arn
+
+  eks_addons = {
+
+    coredns = {
+      most_recent = true
+    }
     vpc-cni = {
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
       most_recent = true
     }
     kube-proxy = {
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
       most_recent = true
     }
-    coredns = {
-      resolve_conflicts_on_create = "OVERWRITE"
-      resolve_conflicts_on_update = "OVERWRITE"
-      most_recent = true
-    }
-  }
-
-  addons_timeouts = {
-    create = "15m"
-    update = "15m"
-    delete = "15m"
   }
 
 }
@@ -62,7 +62,7 @@ data "aws_iam_policy_document" "assume_deploy"{
       values = ["sts.amazonaws.com"]
     }
     condition {
-      test = "StringEquals"
+      test = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [var.github_repo]
     }
@@ -181,5 +181,24 @@ resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller" {
 resource "aws_iam_role_policy_attachment" "github_eks_deploy" {
   role = aws_iam_role.github_eks_deploy.name
   policy_arn = aws_iam_policy.github_eks_deploy.arn
+}
+
+# Map GitHub OIDC deployment role into EKS aws-auth ConfigMap
+resource "kubernetes_config_map_v1_data" "aws_auth_github_deploy" {
+  metadata {
+    name      = "aws-auth"
+    namespace = "kube-system"
+  }
+  force = true
+  data = {
+    mapRoles = yamlencode([
+      {
+        rolearn  = "arn:aws:iam::765568065512:role/github_eks_deploy"
+        username = "github-deployer"
+        groups   = ["system:masters"]
+      }
+    ])
+  }
+  depends_on = [module.eks]
 }
 

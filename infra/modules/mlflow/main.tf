@@ -80,7 +80,7 @@ data "aws_iam_policy_document" "artifact_policy"{
       "s3:DeleteObjectVersion"
      ]
     resources = [
-      "${aws_s3_bucket.this.arn}/mlflow"
+      "${aws_s3_bucket.this.arn}/mlflow/*"
     ]
   }
   statement {
@@ -106,7 +106,8 @@ data "aws_iam_policy_document" "data_policy"{
       "s3:DeleteObjectVersion"
      ]
     resources = [
-      "${aws_s3_bucket.this.arn}/data"
+      "${aws_s3_bucket.this.arn}/data/*",
+      "${aws_s3_bucket.this.arn}/mlflow/*"
     ]
   }
   statement {
@@ -135,7 +136,8 @@ data "aws_iam_policy_document" "assume" {
     condition {
       test = "StringEquals"
       variable = "${var.oidc_issuer}:sub"
-      values = ["system:serviceaccount:mlops:mlflow-sa"]
+      values = ["system:serviceaccount:mlops:mlflow-sa",
+                "system:serviceaccount:app:serve-sa"]
     }
   }
 }

@@ -15,9 +15,13 @@ spec:
       labels:
         app: app
     spec:
+      serviceAccountName: serve-sa
       containers:
       - name: app
-        image: 765568065512.dkr.ecr.us-east-1.amazonaws.com/ai-playground-app:latest
+        image: 765568065512.dkr.ecr.us-east-1.amazonaws.com/ai-playground-app:serve-v1
+        command: ["/bin/sh", "-c"]
+        args:
+          - pip install boto3 && uvicorn serve:app --host 0.0.0.0 --port 8000
         envFrom:
         - configMapRef:
             name: mlflow-client-config
